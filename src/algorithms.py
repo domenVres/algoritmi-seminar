@@ -7,7 +7,6 @@ def divide_and_conquer(partial_order):
     pass
 
 
-
 def paper_algorithm(partial_order):
     """
     Algoritem z boljso casovno zahtevnostjo, predstavljen v clanku
