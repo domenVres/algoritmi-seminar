@@ -6,15 +6,26 @@ import networkx as nx
 from data_preparation import generate_data, create_graph
 
 
-def divide_and_conquer(partial_order):
+def divide_and_conquer(partial_order, memo=None):
     """
     Osnovni deli in vladaj algoritem, ki deluje v casu O(n*2^n)
     :param partial_order: networkx.DiGraph - vozlisca so mnozice tock, povezava u -> v pomeni, da je u < v
+    :param memo: dictionary - memoizacija, kljuci so urejene terke, ki predstavljajo mnozico vozlisc, ki je v grafu, vrednosti so stevila linearnih razsiritev
     :return: Stevilo linearnih razsiritev
     """
+    if memo is None:
+        memo = {}
+
     # Zaustavitveni pogoj rekurzije
     if partial_order.order() == 1:
         return 1
+
+    # Urejena terka za memoizacijo
+    nodes = tuple(sorted(partial_order.nodes()))
+    # Preverimo, ce imamo stevilo ze naracunano
+    linear_extensions = memo.get(nodes, None)
+    if linear_extensions is not None:
+        return linear_extensions
 
     # Gremo rekurzivno po maksimalnih elementih (tistih brez izhodnih povezav)
     linear_extensions = 0
@@ -25,12 +36,14 @@ def divide_and_conquer(partial_order):
             removed = [(pred, node) for pred in partial_order.predecessors(node)]
             partial_order.remove_node(node)
             # Rekurziven klic
-            linear_extensions += divide_and_conquer(partial_order)
+            linear_extensions += divide_and_conquer(partial_order, memo)
             # Vrnemo odstranjeno vozlisce in povezave
             partial_order.add_node(node)
             for u, v in removed:
                 partial_order.add_edge(u, v)
 
+    # Shranimo v memoizacijo
+    memo[nodes] = linear_extensions
     return linear_extensions
 
 
@@ -45,8 +58,9 @@ def paper_algorithm(partial_order):
 
     return 1
 
+
 if __name__ == "__main__":
-    velikosti = [2, 4, 6, 8, 10]
+    velikosti = [5, 10, 15, 20, 25, 30, 35, 40]
     st_primerov = 5
     generate_data(velikosti, st_primerov, seed=1)
 
