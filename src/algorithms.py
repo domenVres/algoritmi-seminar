@@ -1,5 +1,6 @@
 import time
 import random
+import math
 
 import networkx as nx
 
@@ -47,16 +48,65 @@ def divide_and_conquer(partial_order, memo=None):
     return linear_extensions
 
 
+# def get_maximum_matching(partial_order):
+#     W = set()
+#     for edge in partial_order.edges():
+#         W.add(edge[0])
+#         W.add(edge[1])
+#     return W
+#
+#
+# def get_A(partial_order):
+#     A = []
+#     for (node, deg) in partial_order.degree():
+#         if deg == 0:
+#             A.append(node)
+#     return A
+
+
+def get_matching_nodes(M):
+    W = set()
+    for (n1, n2) in M:
+        W.add(n1)
+        W.add(n2)
+    return W
+
+
 def paper_algorithm(partial_order):
     """
     Algoritem z boljso casovno zahtevnostjo, predstavljen v clanku
     :param partial_order: networkx.DiGraph - vozlisca so mnozice tock, povezava u -> v pomeni, da je u < v
     :return: Stevilo linearnih razsiritev
     """
-    i = random.uniform(0, 0.05)
-    time.sleep(0.001 * partial_order.order() + i)
 
-    return 1
+    linear_extensions = 1
+
+    M = nx.maximal_matching(partial_order)
+    W = get_matching_nodes(M)
+    A = list(set(partial_order.nodes()) - W)
+
+    # todo improvements
+
+    # partition A  A'
+    A_line = dict()
+    for node in A:
+        neighborhood = tuple(sorted(partial_order.neighbors(node)))
+        if neighborhood in A_line:
+            A_line[neighborhood].append(node)
+        else:
+            A_line[neighborhood] = [node]
+
+    # konstrukcija P' in kalkulacija produkta |Ai|!
+    for _, a in A_line.items():
+        nx.add_path(partial_order, a)
+        linear_extensions *= math.factorial(len(a))
+
+    linear_extensions *= divide_and_conquer(partial_order)
+
+    # for _, a in A_line.items():
+    #     linear_extensions *= math.factorial(len(a))
+
+    return linear_extensions
 
 
 if __name__ == "__main__":
