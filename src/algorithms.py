@@ -114,8 +114,12 @@ def paper_algorithm(partial_order):
 
     linear_extensions = 1
     all_edges = set(partial_order.edges())
+    n = partial_order.number_of_nodes()
 
     M = set(nx.maximal_matching(partial_order))
+    # large matching or small matching
+    if len(M)/n:
+        return divide_and_conquer(partial_order)
     W = get_matching_nodes(M)
     A = set(partial_order.nodes()) - W
 
