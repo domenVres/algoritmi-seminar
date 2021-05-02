@@ -1,9 +1,5 @@
-import time
-import random
 import math
-
 import networkx as nx
-from networkx.algorithms import bipartite
 
 from data_preparation import generate_data, create_graph
 
@@ -135,10 +131,11 @@ def get_bipartite_quartets(T, A, all_edges):
     return B
 
 
-def paper_algorithm(partial_order):
+def paper_algorithm(partial_order, triplets=True):
     """
     Algoritem z boljso casovno zahtevnostjo, predstavljen v clanku
     :param partial_order: networkx.DiGraph - vozlisca so mnozice tock, povezava u -> v pomeni, da je u < v
+    :param triplets: boolean - ali algoritem ujemanje se dodatno deli na trojcke in cetvorcke
     :return: Stevilo linearnih razsiritev
     """
 
@@ -154,20 +151,21 @@ def paper_algorithm(partial_order):
     A = set(partial_order.nodes()) - W
 
     # canonical maximum matching
-    canonical_maximum_matching = get_canonical_matching(M, A, all_edges)
-    W = get_matching_nodes(canonical_maximum_matching)
-    A = set(partial_order.nodes()) - W
+    if triplets:
+        canonical_maximum_matching = get_canonical_matching(M, A, all_edges)
+        W = get_matching_nodes(canonical_maximum_matching)
+        A = set(partial_order.nodes()) - W
 
-    # triplets and quartets
-    triplets_bipartite = make_bipartite_triplets(canonical_maximum_matching, A, all_edges)
-    M_triplets = nx.maximal_matching(triplets_bipartite)
-    for edge in M_triplets:
-        A.remove(edge[0])
+        # triplets and quartets
+        triplets_bipartite = make_bipartite_triplets(canonical_maximum_matching, A, all_edges)
+        M_triplets = nx.maximal_matching(triplets_bipartite)
+        for edge in M_triplets:
+            A.remove(edge[0])
 
-    quartets_bipartite = get_bipartite_quartets(M_triplets, A, all_edges)
-    M_quartets = nx.maximal_matching(quartets_bipartite)
-    for edge in M_quartets:
-        A.remove(edge[0])
+        quartets_bipartite = get_bipartite_quartets(M_triplets, A, all_edges)
+        M_quartets = nx.maximal_matching(quartets_bipartite)
+        for edge in M_quartets:
+            A.remove(edge[0])
 
     # partition A into  A'
     A_line = dict()

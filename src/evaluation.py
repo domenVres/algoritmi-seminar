@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-from tqdm import trange
+from tqdm.auto import trange
 import os
 
 from data_preparation import generate_data, create_graph
@@ -118,14 +118,14 @@ def compare_algorithms(set_sizes, n_sets):
     # Graficna primerjava casov izvajanja
     plt.figure(figsize=(16, 9))
     plt.plot(set_sizes, time_divide, color="red", marker="o", label="Povprečen čas deli in vladaj")
-    plt.plot(set_sizes, lower_divide, color="red", linestyle="--", label="Interval zaupanja deli in vladaj")
-    plt.plot(set_sizes, upper_divide, color="red", linestyle="--")
+    plt.plot(set_sizes, lower_divide, color="red", linestyle="--", linewidth=0.5, label="Interval zaupanja deli in vladaj")
+    plt.plot(set_sizes, upper_divide, color="red", linestyle="--", linewidth=0.5)
     plt.plot(set_sizes, time_paper, color="blue", marker="o", label="Povprečen čas članek brez trojčkov")
-    plt.plot(set_sizes, lower_paper, color="blue", linestyle="--", label="Interval zaupanja članek brez trojčkov")
-    plt.plot(set_sizes, upper_paper, color="blue", linestyle="--")
+    plt.plot(set_sizes, lower_paper, color="blue", linestyle="--", linewidth=0.5, label="Interval zaupanja članek brez trojčkov")
+    plt.plot(set_sizes, upper_paper, color="blue", linestyle="--", linewidth=0.5)
     plt.plot(set_sizes, time_paper_triplets, color="green", marker="o", label="Povprečen čas članek s trojčki")
-    plt.plot(set_sizes, lower_paper_triplets, color="green", linestyle="--", label="Interval zaupanja članek s trojčki")
-    plt.plot(set_sizes, upper_paper_triplets, color="green", linestyle="--")
+    plt.plot(set_sizes, lower_paper_triplets, color="green", linestyle="--", linewidth=0.5, label="Interval zaupanja članek s trojčki")
+    plt.plot(set_sizes, upper_paper_triplets, color="green", linestyle="--", linewidth=0.5)
     plt.xlabel("n")
     plt.ylabel("čas [s]")
     plt.legend(fontsize=14)
@@ -139,8 +139,7 @@ def compare_algorithms(set_sizes, n_sets):
 
 if __name__ == "__main__":
     # Velikosti mnozic, ki jih bomo testirali
-    #VELIKOSTI_MNOZIC = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
-    VELIKOSTI_MNOZIC = [5, 10, 15, 20]
+    VELIKOSTI_MNOZIC = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
     # Stevilo testnih primerov za vsako velikost mnozice
     STEVILO_PRIMEROV = 5
 
