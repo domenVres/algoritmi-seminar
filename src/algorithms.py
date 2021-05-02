@@ -90,21 +90,18 @@ def paper_algorithm(partial_order):
     # partition A  A'
     A_line = dict()
     for node in A:
-        neighborhood = tuple(sorted(partial_order.neighbors(node)))
+        neighborhood = tuple(sorted(list(partial_order.predecessors(node)) + list(partial_order.successors(node))))
         if neighborhood in A_line:
             A_line[neighborhood].append(node)
         else:
             A_line[neighborhood] = [node]
 
     # konstrukcija P' in kalkulacija produkta |Ai|!
-    for _, a in A_line.items():
+    for a in A_line.values():
         nx.add_path(partial_order, a)
         linear_extensions *= math.factorial(len(a))
 
     linear_extensions *= divide_and_conquer(partial_order)
-
-    # for _, a in A_line.items():
-    #     linear_extensions *= math.factorial(len(a))
 
     return linear_extensions
 
@@ -123,5 +120,8 @@ if __name__ == "__main__":
             g = create_graph(path)
 
             # Izvedemo oba algoritma, razsirimo rezultate
-            print(f"Rezultat deli in vladaj algoritma na vhodu {path}:", divide_and_conquer(g))
-            print(f"Rezultat algoritma iz clanka na vhodu {path}:", paper_algorithm(g))
+            l1 = divide_and_conquer(g)
+            l2 = paper_algorithm(g)
+            print(f"Rezultat deli in vladaj algoritma na vhodu {path}:", l1)
+            print(f"Rezultat algoritma iz clanka na vhodu {path}:", l2)
+            assert (l1 == l2)
