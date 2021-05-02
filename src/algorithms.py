@@ -70,20 +70,19 @@ def get_canonical_matching(M, A, all_edges):
         if is_separated:
             M.remove(edge)
             M.add(replacement, edge[1])
+            A.remove(replacement)
+            A.add(edge[0])
+            get_canonical_matching(M, A, all_edges)
+            break
     return M
 
 
 def make_bipartite_triplets(M, A, all_edges):
     B = nx.Graph()
-    B.add_nodes_from(A)
-    B.add_nodes_from(M)
+    B.add_nodes_from(A, bipartite=0)
+    B.add_nodes_from(M, bipartite=1)
     for a in A:
         for m in M:
-            # options = set()
-            # options.update((a, m[0]), (m[0], a), (a, m[1]), (m[1], a))
-            # if not all_edges.isdisjoint(options):
-            #     B.add_edge(a, m)
-
             if (a, m[0]) in all_edges or (m[0], a) in all_edges or (a, m[1]) in all_edges or (m[1], a) in all_edges:
                 B.add_edge(a, m)
     return B
@@ -118,35 +117,29 @@ def paper_algorithm(partial_order):
 
     M = set(nx.maximal_matching(partial_order))
     # large matching or small matching
-    if len(M)/n:
+    if len(M)/n >= 1/3:
         return divide_and_conquer(partial_order)
     W = get_matching_nodes(M)
     A = set(partial_order.nodes()) - W
 
-    # todo improvements
     # canonical maximum matching
     canonical_maximum_matching = get_canonical_matching(M, A, all_edges)
     W = get_matching_nodes(canonical_maximum_matching)
     A = set(partial_order.nodes()) - W
 
+    print("PRED:", len(A))
+
     # triplets and quartets
     triplets_bipartite = make_bipartite_triplets(canonical_maximum_matching, A, all_edges)
-    # print(canonical_maximum_matching)
-    # print(A)
-    # print(triplets_bipartite.nodes())
-    # print(triplets_bipartite.number_of_edges())
-    # print(triplets_bipartite.edges())
-    # print(all_edges)
     M_triplets = nx.maximal_matching(triplets_bipartite)
-    # print(M_triplets)
     for edge in M_triplets:
         A.remove(edge[0])
-    # print(A)
 
     quartets_bipartite = get_bipartite_quartets(M_triplets, A, all_edges)
     M_quartets = nx.maximal_matching(quartets_bipartite)
     for edge in M_quartets:
         A.remove(edge[0])
+
 
     # partition A into  A'
     A_line = dict()
