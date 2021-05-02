@@ -50,6 +50,11 @@ def divide_and_conquer(partial_order, memo=None):
 
 
 def get_matching_nodes(M):
+    """
+    Funkcija, ki vrne vozlišča maksimalne ujemanosti
+    :param M: set - maksimalna ujemanost
+    :return: set - vozlišča maksimalne ujemanosti
+    """
     W = set()
     for (n1, n2) in M:
         W.add(n1)
@@ -58,6 +63,13 @@ def get_matching_nodes(M):
 
 
 def get_separated(edge, A, all_edges):
+    """
+    Funkcija, ki preveri če je povezava razdvojena in poišče element antivirige, ki povzroči razdvojenost povezave
+    :param edge: edge - povezava
+    :param A: set - antiveriga
+    :param all_edges: set povezav - povezava u -> v pomeni, da je u < v
+    :return: bool - ali je povezava razdvojena; int - vozlišče antiverige
+    """
     for a in A:
         if (edge[0], a) in all_edges and (a, edge[1]) in all_edges:
             return True, a
@@ -65,6 +77,13 @@ def get_separated(edge, A, all_edges):
 
 
 def get_canonical_matching(M, A, all_edges):
+    """
+    Funkcija, ki vrne kanonično maksimalno ujemanje
+    :param M: set - maksimalno ujemanje
+    :param A: set - antiveriga
+    :param all_edges: set povezav - povezava u -> v pomeni, da je u < v
+    :return: set - kanonično maksimalno ujemanje
+    """
     for edge in M:
         is_separated, replacement = get_separated(edge, A, all_edges)
         if is_separated:
@@ -78,6 +97,13 @@ def get_canonical_matching(M, A, all_edges):
 
 
 def make_bipartite_triplets(M, A, all_edges):
+    """
+    Funkcija, ki vrne bipartitni graf za trojčke, kot je opisano v članku
+    :param M: set - kanonično maskimalno ujemanje
+    :param A: set - antiveriga
+    :param all_edges: set povezav - povezava u -> v pomeni, da je u < v
+    :return: nx.Graph() - bipartitni graf za trojčke
+    """
     B = nx.Graph()
     B.add_nodes_from(A, bipartite=0)
     B.add_nodes_from(M, bipartite=1)
@@ -89,6 +115,13 @@ def make_bipartite_triplets(M, A, all_edges):
 
 
 def get_bipartite_quartets(T, A, all_edges):
+    """
+    Funkcija, ki vrne bipartitni graf za četvorčke opisan v članku
+    :param T: set - trojčki
+    :param A: set - antiveriga
+    :param all_edges: set povezav, povezava u -> v pomeni, da je u < v
+    :return: nx.Graph() - bipartitni graf za četvorčke
+    """
     B = nx.Graph()
     B.add_nodes_from(A, bipartite=0)
     B.add_nodes_from(T, bipartite=1)
@@ -100,8 +133,6 @@ def get_bipartite_quartets(T, A, all_edges):
                 if (a, t[1][0]) in all_edges or (t[1][0], a) in all_edges or (a, t[1][1]) in all_edges or (t[1][1], a) in all_edges:
                     B.add_edge(a, t)
     return B
-
-
 
 
 def paper_algorithm(partial_order):
@@ -127,8 +158,6 @@ def paper_algorithm(partial_order):
     W = get_matching_nodes(canonical_maximum_matching)
     A = set(partial_order.nodes()) - W
 
-    print("PRED:", len(A))
-
     # triplets and quartets
     triplets_bipartite = make_bipartite_triplets(canonical_maximum_matching, A, all_edges)
     M_triplets = nx.maximal_matching(triplets_bipartite)
@@ -139,7 +168,6 @@ def paper_algorithm(partial_order):
     M_quartets = nx.maximal_matching(quartets_bipartite)
     for edge in M_quartets:
         A.remove(edge[0])
-
 
     # partition A into  A'
     A_line = dict()
