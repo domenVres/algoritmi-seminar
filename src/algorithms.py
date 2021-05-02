@@ -3,6 +3,7 @@ import random
 import math
 
 import networkx as nx
+from networkx.algorithms import bipartite
 
 from data_preparation import generate_data, create_graph
 
@@ -48,28 +49,60 @@ def divide_and_conquer(partial_order, memo=None):
     return linear_extensions
 
 
-# def get_maximum_matching(partial_order):
-#     W = set()
-#     for edge in partial_order.edges():
-#         W.add(edge[0])
-#         W.add(edge[1])
-#     return W
-#
-#
-# def get_A(partial_order):
-#     A = []
-#     for (node, deg) in partial_order.degree():
-#         if deg == 0:
-#             A.append(node)
-#     return A
-
-
 def get_matching_nodes(M):
     W = set()
     for (n1, n2) in M:
         W.add(n1)
         W.add(n2)
     return W
+
+
+def get_separated(edge, A, all_edges):
+    for a in A:
+        if (edge[0], a) in all_edges and (a, edge[1]) in all_edges:
+            return True, a
+    return False, -1
+
+
+def get_canonical_matching(M, A, all_edges):
+    for edge in M:
+        is_separated, replacement = get_separated(edge, A, all_edges)
+        if is_separated:
+            M.remove(edge)
+            M.add(replacement, edge[1])
+    return M
+
+
+def make_bipartite_triplets(M, A, all_edges):
+    B = nx.Graph()
+    B.add_nodes_from(A)
+    B.add_nodes_from(M)
+    for a in A:
+        for m in M:
+            # options = set()
+            # options.update((a, m[0]), (m[0], a), (a, m[1]), (m[1], a))
+            # if not all_edges.isdisjoint(options):
+            #     B.add_edge(a, m)
+
+            if (a, m[0]) in all_edges or (m[0], a) in all_edges or (a, m[1]) in all_edges or (m[1], a) in all_edges:
+                B.add_edge(a, m)
+    return B
+
+
+def get_bipartite_quartets(T, A, all_edges):
+    B = nx.Graph()
+    B.add_nodes_from(A, bipartite=0)
+    B.add_nodes_from(T, bipartite=1)
+    for a in A:
+        for t in T:
+            if (a, t[0]) in all_edges or (t[0], a) in all_edges:
+                B.add_edge(a, t)
+            else:
+                if (a, t[1][0]) in all_edges or (t[1][0], a) in all_edges or (a, t[1][1]) in all_edges or (t[1][1], a) in all_edges:
+                    B.add_edge(a, t)
+    return B
+
+
 
 
 def paper_algorithm(partial_order):
@@ -80,14 +113,38 @@ def paper_algorithm(partial_order):
     """
 
     linear_extensions = 1
+    all_edges = set(partial_order.edges())
 
-    M = nx.maximal_matching(partial_order)
+    M = set(nx.maximal_matching(partial_order))
     W = get_matching_nodes(M)
-    A = list(set(partial_order.nodes()) - W)
+    A = set(partial_order.nodes()) - W
 
     # todo improvements
+    # canonical maximum matching
+    canonical_maximum_matching = get_canonical_matching(M, A, all_edges)
+    W = get_matching_nodes(canonical_maximum_matching)
+    A = set(partial_order.nodes()) - W
 
-    # partition A  A'
+    # triplets and quartets
+    triplets_bipartite = make_bipartite_triplets(canonical_maximum_matching, A, all_edges)
+    # print(canonical_maximum_matching)
+    # print(A)
+    # print(triplets_bipartite.nodes())
+    # print(triplets_bipartite.number_of_edges())
+    # print(triplets_bipartite.edges())
+    # print(all_edges)
+    M_triplets = nx.maximal_matching(triplets_bipartite)
+    # print(M_triplets)
+    for edge in M_triplets:
+        A.remove(edge[0])
+    # print(A)
+
+    quartets_bipartite = get_bipartite_quartets(M_triplets, A, all_edges)
+    M_quartets = nx.maximal_matching(quartets_bipartite)
+    for edge in M_quartets:
+        A.remove(edge[0])
+
+    # partition A into  A'
     A_line = dict()
     for node in A:
         neighborhood = tuple(sorted(list(partial_order.predecessors(node)) + list(partial_order.successors(node))))
