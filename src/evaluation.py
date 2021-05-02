@@ -66,17 +66,25 @@ def compare_algorithms(set_sizes, n_sets):
     # Povprecni casi izvajanja ter intervali zaupanja za oba algoritma
     time_divide = []
     time_paper = []
+    time_paper_triplets = []
     lower_divide = []
     upper_divide = []
     lower_paper = []
     upper_paper = []
+    lower_paper_triplets = []
+    upper_paper_triplets = []
 
     print("Pricenjam evalvacijo algoritmov ...")
 
     for n in set_sizes:
-        # Casi izvajanja pri tem n za oba algoritma
+        # Casi izvajanja pri tem n za vse tri algoritme
         results_divide = np.array([])
         results_paper = np.array([])
+        results_paper_triplets = np.array([])
+
+        # wrapper za poganjanje algoritma iz clanka brez trojckov in cetvorckov
+        def without_triplets(graph):
+            return paper_algorithm(graph, triplets=False)
 
         for k in range(n_sets):
             # Pot do vhodne datoteke
@@ -84,13 +92,16 @@ def compare_algorithms(set_sizes, n_sets):
             # Ustvarimo graf, ki predstavlja podano delno urejenost
             g = create_graph(path)
 
-            # Izvedemo oba algoritma, razsirimo rezultate
+            # Izvedemo vse tri algoritme, razsirimo rezultate
             print(f"Evalvacija osnovnega deli in vladaj algoritma za n = {n} in k = {k+1} ...")
             results_divide = np.concatenate((results_divide, measure_execution(g, divide_and_conquer)))
             print(f"Evalvacija algoritma iz clanka za n = {n} in k = {k+1} ...")
-            results_paper = np.concatenate((results_paper, measure_execution(g, paper_algorithm)))
+            results_paper = np.concatenate((results_paper, measure_execution(g, without_triplets)))
+            print(f"Evalvacija algoritma iz clanka s trojcki in cetvorcki za n = {n} in k = {k+1} ...")
+            results_paper_triplets = np.concatenate((results_paper_triplets, measure_execution(g, paper_algorithm)))
 
-        # Izracunamo povprecje in interval zaupanja za oba algoritma pri tem n in dodamo k rezultatom
+
+        # Izracunamo povprecje in interval zaupanja za vse tri algoritme pri tem n in dodamo k rezultatom
         time_divide.append(np.mean(results_divide))
         lower, upper = bootstrap_ci(results_divide)
         lower_divide.append(lower)
@@ -99,15 +110,22 @@ def compare_algorithms(set_sizes, n_sets):
         lower, upper = bootstrap_ci(results_paper)
         lower_paper.append(lower)
         upper_paper.append(upper)
+        time_paper_triplets.append(np.mean(results_paper_triplets))
+        lower, upper = bootstrap_ci(results_paper_triplets)
+        lower_paper_triplets.append(lower)
+        upper_paper_triplets.append(upper)
 
     # Graficna primerjava casov izvajanja
     plt.figure(figsize=(16, 9))
     plt.plot(set_sizes, time_divide, color="red", marker="o", label="Povprečen čas deli in vladaj")
-    plt.plot(set_sizes, lower_divide, color="red", marker="o", linestyle="--", label="Interval zaupanja deli in vladaj")
-    plt.plot(set_sizes, upper_divide, color="red", marker="o", linestyle="--")
-    plt.plot(set_sizes, time_paper, color="green", marker="o", label="Povprečen čas članek")
-    plt.plot(set_sizes, lower_paper, color="green", marker="o", linestyle="--", label="Interval zaupanja članek")
-    plt.plot(set_sizes, upper_paper, color="green", marker="o", linestyle="--")
+    plt.plot(set_sizes, lower_divide, color="red", linestyle="--", label="Interval zaupanja deli in vladaj")
+    plt.plot(set_sizes, upper_divide, color="red", linestyle="--")
+    plt.plot(set_sizes, time_paper, color="blue", marker="o", label="Povprečen čas članek brez trojčkov")
+    plt.plot(set_sizes, lower_paper, color="blue", linestyle="--", label="Interval zaupanja članek brez trojčkov")
+    plt.plot(set_sizes, upper_paper, color="blue", linestyle="--")
+    plt.plot(set_sizes, time_paper_triplets, color="green", marker="o", label="Povprečen čas članek s trojčki")
+    plt.plot(set_sizes, lower_paper_triplets, color="green", linestyle="--", label="Interval zaupanja članek s trojčki")
+    plt.plot(set_sizes, upper_paper_triplets, color="green", linestyle="--")
     plt.xlabel("n")
     plt.ylabel("čas [s]")
     plt.legend(fontsize=14)
@@ -121,7 +139,8 @@ def compare_algorithms(set_sizes, n_sets):
 
 if __name__ == "__main__":
     # Velikosti mnozic, ki jih bomo testirali
-    VELIKOSTI_MNOZIC = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+    #VELIKOSTI_MNOZIC = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+    VELIKOSTI_MNOZIC = [5, 10, 15, 20]
     # Stevilo testnih primerov za vsako velikost mnozice
     STEVILO_PRIMEROV = 5
 

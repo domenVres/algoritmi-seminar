@@ -140,7 +140,6 @@ def paper_algorithm(partial_order):
     for edge in M_quartets:
         A.remove(edge[0])
 
-
     # partition A into  A'
     A_line = dict()
     for node in A:
