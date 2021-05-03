@@ -202,7 +202,7 @@ if __name__ == "__main__":
 
             # Izvedemo oba algoritma, razsirimo rezultate
             l1 = divide_and_conquer(g)
-            l2 = paper_algorithm(g)
+            l2, _, _ = paper_algorithm(g)
             print(f"Rezultat deli in vladaj algoritma na vhodu {path}:", l1)
             print(f"Rezultat algoritma iz clanka na vhodu {path}:", l2)
-            assert (l1 == l2[0])
+            assert (l1 == l2)
