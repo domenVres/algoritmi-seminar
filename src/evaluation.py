@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import time
 from tqdm.auto import trange
@@ -15,21 +16,22 @@ def measure_execution(partial_order, algorithm, repeats=100):
     :param partial_order: networkx.DiGraph - delna urejenost predstavljena z grafom, kot jo vrne funkcija create_graph
     :param algorithm: function - ali divide_and_conquer ali pa paper_algorithm
     :param repeats: int - stevilo meritev
-    :return: 1D numpy array - tabela, ki hrani cas izvajanja za vsako meritev
+    :return: (1D numpy array, result) - tabela, ki hrani cas izvajanja za vsako meritev in rezultat klica algoritma
     """
     times = np.empty(repeats)
+    result = None
     for i in trange(repeats):
         # Zacnemo meriti cas
         start_time = time.time()
         # Izvedemo algoritem
-        algorithm(partial_order)
+        result = algorithm(partial_order)
         # Ustavimo merjenje
         end_time = time.time()
 
         # Pretecen cas je razlika med koncnim in zacetnim
         times[i] = end_time - start_time
 
-    return times
+    return times, result
 
 
 def bootstrap_ci(x, alpha=0.95, nsamples=1000):
@@ -74,6 +76,18 @@ def compare_algorithms(set_sizes, n_sets):
     lower_paper_triplets = []
     upper_paper_triplets = []
 
+    # Intervali zaupanja za stevilo primerov, ko imamo large matching case
+    large_matching_upper = []
+    large_matching_lower = []
+
+    # Velikosti mnozice A, ce imamo large matching case shranimo kar 0
+    A_size = []
+    A_size_triplets = []
+    A_size_upper = []
+    A_size_lower = []
+    A_size_upper_triplets = []
+    A_size_lower_triplets = []
+
     print("Pricenjam evalvacijo algoritmov ...")
 
     for n in set_sizes:
@@ -81,6 +95,13 @@ def compare_algorithms(set_sizes, n_sets):
         results_divide = np.array([])
         results_paper = np.array([])
         results_paper_triplets = np.array([])
+
+        # Ali smo sli v large matching case
+        large_matching = []
+
+        # Velikost mnozice A
+        A_sizes = []
+        A_sizes_triplets = []
 
         # wrapper za poganjanje algoritma iz clanka brez trojckov in cetvorckov
         def without_triplets(graph):
@@ -94,12 +115,21 @@ def compare_algorithms(set_sizes, n_sets):
 
             # Izvedemo vse tri algoritme, razsirimo rezultate
             print(f"Evalvacija osnovnega deli in vladaj algoritma za n = {n} in k = {k+1} ...")
-            results_divide = np.concatenate((results_divide, measure_execution(g, divide_and_conquer)))
+            results_divide = np.concatenate((results_divide, measure_execution(g, divide_and_conquer)[0]))
             print(f"Evalvacija algoritma iz clanka za n = {n} in k = {k+1} ...")
-            results_paper = np.concatenate((results_paper, measure_execution(g, without_triplets)))
+            times, results = measure_execution(g, without_triplets)
+            results_paper = np.concatenate((results_paper, times))
+            large_matching.append(results[1])
+            A_sizes.append(results[2])
             print(f"Evalvacija algoritma iz clanka s trojcki in cetvorcki za n = {n} in k = {k+1} ...")
-            results_paper_triplets = np.concatenate((results_paper_triplets, measure_execution(g, paper_algorithm)))
+            times, results = measure_execution(g, paper_algorithm)
+            results_paper_triplets = np.concatenate((results_paper_triplets, times))
+            A_sizes_triplets.append(results[2])
 
+        # Spremenimo v arraye za lazje racunanje
+        large_matching = np.array(large_matching)
+        A_sizes = np.array(A_sizes)
+        A_sizes_triplets = np.array(A_sizes_triplets)
 
         # Izracunamo povprecje in interval zaupanja za vse tri algoritme pri tem n in dodamo k rezultatom
         time_divide.append(np.mean(results_divide))
@@ -114,6 +144,21 @@ def compare_algorithms(set_sizes, n_sets):
         lower, upper = bootstrap_ci(results_paper_triplets)
         lower_paper_triplets.append(lower)
         upper_paper_triplets.append(upper)
+
+        # Izracunamo intervale zaupanja za odstotek primerov, ko gremo v large matching case
+        lower, upper = bootstrap_ci(large_matching, nsamples=100)
+        large_matching_lower.append(100*np.round(lower, 4))
+        large_matching_upper.append(100*np.round(upper, 4))
+
+        # Povprecna velikost A in interval zaupanja
+        A_size.append(np.mean(A_sizes))
+        lower, upper = bootstrap_ci(A_sizes, nsamples=100)
+        A_size_lower.append(lower)
+        A_size_upper.append(upper)
+        A_size_triplets.append(np.mean(A_sizes_triplets))
+        lower, upper = bootstrap_ci(A_sizes_triplets, nsamples=100)
+        A_size_lower_triplets.append(lower)
+        A_size_upper_triplets.append(upper)
 
     # Graficna primerjava casov izvajanja
     plt.figure(figsize=(16, 9))
@@ -135,6 +180,29 @@ def compare_algorithms(set_sizes, n_sets):
     if not os.path.exists('../results'):
         os.makedirs('../results')
     plt.savefig('../results/time_comparison.png')
+
+    # Shranimo intervale zaupanja za odstotek primerov, ko gremo v large matching v .csv datoteko
+    df = pd.DataFrame(data={"n": set_sizes, "ci_min": large_matching_lower, "ci_max": large_matching_upper})
+    df.to_csv('../results/large_matching.csv', index=False)
+
+    # Graficna primerjava velikosti mnozice A
+    plt.figure(figsize=(16, 9))
+    plt.plot(set_sizes, A_size, color="blue", marker="o", label="Povprečna velikost brez trojčkov")
+    plt.plot(set_sizes, A_size_lower, color="blue", linestyle="--", linewidth=0.5,
+             label="Interval zaupanja brez trojčkov")
+    plt.plot(set_sizes, A_size_upper, color="blue", linestyle="--", linewidth=0.5)
+    plt.plot(set_sizes, A_size_triplets, color="green", marker="o", label="Povprečna velikost s trojčki")
+    plt.plot(set_sizes, A_size_lower_triplets, color="green", linestyle="--", linewidth=0.5,
+             label="Interval zaupanja s trojčki")
+    plt.plot(set_sizes, A_size_upper_triplets, color="green", linestyle="--", linewidth=0.5)
+    plt.xlabel("n")
+    plt.ylabel("Velikost A")
+    plt.legend(fontsize=14)
+    plt.title(
+        "Primerjava povprečne velikosti množice A v odvisnosti od velikosti vhoda za algoritem predlagan v članku brez in z delitvijo točk v trojčke in četvorčke")
+
+    # Shranimo graf
+    plt.savefig('../results/A_size_comparison.png')
 
 
 if __name__ == "__main__":
