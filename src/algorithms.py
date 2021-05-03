@@ -136,7 +136,7 @@ def paper_algorithm(partial_order, triplets=True):
     Algoritem z boljso casovno zahtevnostjo, predstavljen v clanku
     :param partial_order: networkx.DiGraph - vozlisca so mnozice tock, povezava u -> v pomeni, da je u < v
     :param triplets: boolean - ali algoritem ujemanje se dodatno deli na trojcke in cetvorcke
-    :return: Stevilo linearnih razsiritev
+    :return: (linear_extensions, large_case, A_size) - Stevilo linearnih razsiritev, indikator, ki pove ali je alfa vecja od 1/3 (uporabimo osnovni algoritem) ter velikost mnozice A
     """
 
     linear_extensions = 1
@@ -146,7 +146,7 @@ def paper_algorithm(partial_order, triplets=True):
     M = nx.maximal_matching(partial_order)
     # large matching ali small matching
     if len(M)/n >= 1/3:
-        return divide_and_conquer(partial_order)
+        return divide_and_conquer(partial_order), True, 0
     W = get_matching_nodes(M)
     A = set(partial_order.nodes()) - W
 
@@ -184,7 +184,7 @@ def paper_algorithm(partial_order, triplets=True):
 
     linear_extensions *= divide_and_conquer(partial_order)
 
-    return linear_extensions
+    return linear_extensions, False, len(A)
 
 
 if __name__ == "__main__":
