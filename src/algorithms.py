@@ -143,20 +143,20 @@ def paper_algorithm(partial_order, triplets=True):
     all_edges = set(partial_order.edges())
     n = partial_order.number_of_nodes()
 
-    M = set(nx.maximal_matching(partial_order))
-    # large matching or small matching
+    M = nx.maximal_matching(partial_order)
+    # large matching ali small matching
     if len(M)/n >= 1/3:
         return divide_and_conquer(partial_order)
     W = get_matching_nodes(M)
     A = set(partial_order.nodes()) - W
 
-    # canonical maximum matching
+    # maksimalno kanonično ujemanje
     if triplets:
         canonical_maximum_matching = get_canonical_matching(M, A, all_edges)
         W = get_matching_nodes(canonical_maximum_matching)
         A = set(partial_order.nodes()) - W
 
-        # triplets and quartets
+        # trojčki in četvorčki
         triplets_bipartite = make_bipartite_triplets(canonical_maximum_matching, A, all_edges)
         M_triplets = nx.maximal_matching(triplets_bipartite)
         for edge in M_triplets:
@@ -167,7 +167,7 @@ def paper_algorithm(partial_order, triplets=True):
         for edge in M_quartets:
             A.remove(edge[0])
 
-    # partition A into  A'
+    # particija A v A'
     A_line = dict()
     for node in A:
         neighborhood = tuple(sorted(list(partial_order.predecessors(node)) + list(partial_order.successors(node))))
