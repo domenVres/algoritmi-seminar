@@ -150,24 +150,25 @@ def paper_algorithm(partial_order, triplets=True):
     W = get_matching_nodes(M)
     A = set(partial_order.nodes()) - W
 
-    # maksimalno kanonično ujemanje
     if triplets:
+        # maksimalno kanonično ujemanje
         canonical_maximum_matching = get_canonical_matching(M, A, all_edges)
         W = get_matching_nodes(canonical_maximum_matching)
         A = set(partial_order.nodes()) - W
 
-        # trojčki in četvorčki
+        # trojčki
         triplets_bipartite = make_bipartite_triplets(canonical_maximum_matching, A, all_edges)
         M_triplets = nx.maximal_matching(triplets_bipartite)
         for edge in M_triplets:
             A.remove(edge[0])
 
+        # četvorčki
         quartets_bipartite = get_bipartite_quartets(M_triplets, A, all_edges)
         M_quartets = nx.maximal_matching(quartets_bipartite)
         for edge in M_quartets:
             A.remove(edge[0])
 
-    # particija A v A'
+    # particija A v razrede glede na sosede
     A_line = dict()
     for node in A:
         neighborhood = tuple(sorted(list(partial_order.predecessors(node)) + list(partial_order.successors(node))))
@@ -176,7 +177,7 @@ def paper_algorithm(partial_order, triplets=True):
         else:
             A_line[neighborhood] = [node]
 
-    # konstrukcija P' in kalkulacija produkta |Ai|!
+    # konstrukcija nove delne urejenosti in kalkulacija produkta |Ai|!
     for a in A_line.values():
         nx.add_path(partial_order, a)
         linear_extensions *= math.factorial(len(a))
@@ -201,7 +202,7 @@ if __name__ == "__main__":
 
             # Izvedemo oba algoritma, razsirimo rezultate
             l1 = divide_and_conquer(g)
-            l2 = paper_algorithm(g)
+            l2, _, _ = paper_algorithm(g)
             print(f"Rezultat deli in vladaj algoritma na vhodu {path}:", l1)
             print(f"Rezultat algoritma iz clanka na vhodu {path}:", l2)
             assert (l1 == l2)
