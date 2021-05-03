@@ -205,4 +205,4 @@ if __name__ == "__main__":
             l2 = paper_algorithm(g)
             print(f"Rezultat deli in vladaj algoritma na vhodu {path}:", l1)
             print(f"Rezultat algoritma iz clanka na vhodu {path}:", l2)
-            assert (l1 == l2)
+            assert (l1 == l2[0])
