@@ -45,6 +45,52 @@ def generate_data(set_sizes, n_sets, seed):
             f.close()
 
 
+def generate_with_antichain(set_sizes, n_sets, antichain_sizes, seed):
+    """
+    Funkcija, ki generira vhodne primere z vsiljenimi antiverigami (delni urejenosti doda antiverigo podane velikosti)
+    in jih shrani v datoteke v mapi data. Datoteka vhod_antichain_n_k.txt predstavlja k-ti testni primer za mnozico
+    velikosti n. Format vsake vhodne datoteke je sledec. Prva vrstica je oblike n m, kjer n predstavlja velikost mnozice
+    X, na kateri imamo dano delno urejenost, m pa predstavlja stevilo primerjav znotraj delne urejenosti. Naslednjih m
+    vrstic je oblike u v,  1 <= u, v <= n, ki predstavljajo urejene pare in sicer u < v.
+    :param set_sizes: int list - seznam velikosti mnozic, ki jih bomo testirali
+    :param n_sets: int - stevilo vhodnih primerov, ki jih generiramo za vsako mnozico
+    :param antichain_sizes: float list of length n_sets - velikosti vsiljenih antiverig (kot delez velikosti mnozice) za
+                        posamezen generiran primer
+    :param seed: int - seme nakljucnega generatorja permutacij, uporabljenega za generiranje primerov
+    """
+    np.random.seed(seed)
+
+    for n in set_sizes:
+        for k, size in zip(range(n_sets), antichain_sizes):
+            antichain_size = int(np.round(size*n))
+            # Generiramo nakljucni permutaciji (zadnjih antichain_size elementov predstavlja antiverigo, zato jih ni v permutaciji)
+            p1 = np.random.permutation(n-antichain_size)
+            p2 = np.random.permutation(n-antichain_size)
+            # Potrebujemo razlicni permutaciji, sicer imamo delno urejenost reda 1
+            while np.all(p1 == p2):
+                p2 = np.random.permutation(n-antichain_size)
+            # Slovarja, ki za vsako stevilo vrneta mesto v posamezni permutaciji
+            inverse1 = {i: p1[i] for i in range(n-antichain_size)}
+            inverse2 = {i: p2[i] for i in range(n-antichain_size)}
+
+            # Gremo cez vse kombinacije, ce je eno stevilo manjse od drugega v obeh primerih, ju dodamo v delno urejenost
+            partial_order = []
+            for u in range(n-antichain_size):
+                for v in range(n-antichain_size):
+                    if inverse1[u] < inverse1[v] and inverse2[u] < inverse2[v]:
+                        partial_order.append((u, v))
+
+            # Izpisemo delno urejenost v datoteko
+            f = open(f'../data/vhod_antichain_{n}_{k+1}.txt', 'w')
+            # Prva vrstica
+            f.write(f'{n} {len(partial_order)}\n')
+            # Primerljivi elementi
+            for u, v in partial_order:
+                # Dodamo +1, da ni indeksiranja z 0
+                f.write(f'{u+1} {v+1}\n')
+            f.close()
+
+
 def create_graph(path):
     """
     Funkcija, ki iz podane vhodne datoteke ustvari usmerjen graf, ki predstavlja delno urejenost, opisano v vhodni datoteki
