@@ -45,6 +45,20 @@ def generate_data(set_sizes, n_sets, seed):
             f.close()
 
 
+def generate_with_antichain(set_sizes, n_sets, antichain_size, seed):
+    """
+    Funkcija, ki generira vhodne primere (delne urejenosti reda 2) in jih shrani v datoteke v mapi data. Datoteka
+    vhod_n_k.txt predstavlja k-ti testni primer za mnozico velikosti n. Format vsake vhodne datoteke je sledec. Prva
+    vrstica je oblike n m, kjer n predstavlja velikost mnozice X, na kateri imamo dano delno urejenost, m pa predstavlja
+    stevilo primerjav znotraj delne urejenosti. Naslednjih m vrstic je oblike u v,  1 <= u, v <= n, ki predstavljajo
+    urejene pare in sicer u < v.
+    :param set_sizes: int list - seznam velikosti mnozic, ki jih bomo testirali
+    :param n_sets: int - stevilo vhodnih primerov, ki jih generiramo za vsako mnozico
+    :param seed: int - seme nakljucnega generatorja permutacij, uporabljenega za generiranje primerov
+    """
+    np.random.seed(seed)
+
+
 def create_graph(path):
     """
     Funkcija, ki iz podane vhodne datoteke ustvari usmerjen graf, ki predstavlja delno urejenost, opisano v vhodni datoteki
