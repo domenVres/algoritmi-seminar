@@ -143,7 +143,7 @@ def paper_algorithm(partial_order, triplets=True):
     all_edges = set(partial_order.edges())
     n = partial_order.number_of_nodes()
 
-    M = set(nx.maximal_matching(partial_order))
+    M = nx.maximal_matching(partial_order)
     # large matching or small matching
     if len(M)/n >= 1/3:
         return divide_and_conquer(partial_order)

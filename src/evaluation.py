@@ -139,7 +139,7 @@ def compare_algorithms(set_sizes, n_sets):
 
 if __name__ == "__main__":
     # Velikosti mnozic, ki jih bomo testirali
-    VELIKOSTI_MNOZIC = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+    VELIKOSTI_MNOZIC = [5, 10, 15, 20, 25, 30, 35, 40, 45]
     # Stevilo testnih primerov za vsako velikost mnozice
     STEVILO_PRIMEROV = 5
 
