@@ -5,7 +5,7 @@ import time
 from tqdm.auto import trange
 import os
 
-from data_preparation import generate_data, create_graph
+from data_preparation import generate_data, generate_with_antichain, create_graph
 from algorithms import divide_and_conquer, paper_algorithm
 
 
@@ -56,13 +56,14 @@ def bootstrap_ci(x, alpha=0.95, nsamples=1000):
     return samples[quantile-1], samples[-quantile]
 
 
-def compare_algorithms(set_sizes, n_sets):
+def compare_algorithms(set_sizes, n_sets, n_antichains):
     """
     Funkcija, ki izmeri povprecen cas izvajanja obeh algoritmov na mnozicah razlicnih velikosti in izracuna interval
     zaupanja za posamezno povprecje. Funkcija na koncu izrise povprecni cas izvajanja v odvisnosti od velikosti mnozice
     za oba algoritma.
     :param set_sizes: int list - velikosti mnozic, na katerih preizkusamo delovanje algoritmov
-    :param n_sets: int - stevilo razlicnih primerov za vsako velikost mnozice
+    :param n_sets: int - stevilo razlicnih nakljucnih primerov za vsako velikost mnozice
+    :param n_antichains: int - stevilo razlicnih primerov z vsiljenimi verigami za vsako velikost mnozice
     :return: None
     """
     # Povprecni casi izvajanja ter intervali zaupanja za oba algoritma
@@ -107,6 +108,7 @@ def compare_algorithms(set_sizes, n_sets):
         def without_triplets(graph):
             return paper_algorithm(graph, triplets=False)
 
+        # Evalviramo na nakljucnih primerih
         for k in range(n_sets):
             # Pot do vhodne datoteke
             path = f'../data/vhod_{n}_{k+1}.txt'
@@ -122,6 +124,26 @@ def compare_algorithms(set_sizes, n_sets):
             large_matching.append(results[1])
             A_sizes.append(results[2])
             print(f"Evalvacija algoritma iz clanka s trojcki in cetvorcki za n = {n} in k = {k+1} ...")
+            times, results = measure_execution(g, paper_algorithm)
+            results_paper_triplets = np.concatenate((results_paper_triplets, times))
+            A_sizes_triplets.append(results[2])
+
+        # Evalviramo na primerih z vsiljenimi antiverigami
+        for k in range(n_antichains):
+            # Pot do vhodne datoteke
+            path = f'../data/vhod_antichain_{n}_{k + 1}.txt'
+            # Ustvarimo graf, ki predstavlja podano delno urejenost
+            g = create_graph(path)
+
+            # Izvedemo vse tri algoritme, razsirimo rezultate
+            print(f"Evalvacija osnovnega deli in vladaj algoritma na vsiljenih antiverigah za n = {n} in k = {k + 1} ...")
+            results_divide = np.concatenate((results_divide, measure_execution(g, divide_and_conquer)[0]))
+            print(f"Evalvacija algoritma iz clanka na vsiljenih antiverigah za n = {n} in k = {k + 1} ...")
+            times, results = measure_execution(g, without_triplets)
+            results_paper = np.concatenate((results_paper, times))
+            large_matching.append(results[1])
+            A_sizes.append(results[2])
+            print(f"Evalvacija algoritma iz clanka s trojcki in cetvorcki na vsiljenih antiverigah za n = {n} in k = {k + 1} ...")
             times, results = measure_execution(g, paper_algorithm)
             results_paper_triplets = np.concatenate((results_paper_triplets, times))
             A_sizes_triplets.append(results[2])
@@ -179,11 +201,18 @@ def compare_algorithms(set_sizes, n_sets):
     # Shranimo graf
     if not os.path.exists('../results'):
         os.makedirs('../results')
-    plt.savefig('../results/time_comparison.png')
+    # Shranimo v razlicne datoteke, ce imamo vsiljene antiverige ali pa ce jih nimamo
+    if n_antichains == 0:
+        plt.savefig('../results/time_comparison.png')
+    else:
+        plt.savefig('../results/time_comparison_antichains.png')
 
     # Shranimo intervale zaupanja za odstotek primerov, ko gremo v large matching v .csv datoteko
     df = pd.DataFrame(data={"n": set_sizes, "ci_min": large_matching_lower, "ci_max": large_matching_upper})
-    df.to_csv('../results/large_matching.csv', index=False)
+    if n_antichains == 0:
+        df.to_csv('../results/large_matching.csv', index=False)
+    else:
+        df.to_csv('../results/large_matching_antichains.csv', index=False)
 
     # Graficna primerjava velikosti mnozice A
     plt.figure(figsize=(16, 9))
@@ -201,8 +230,11 @@ def compare_algorithms(set_sizes, n_sets):
     plt.title(
         "Primerjava povprečne velikosti množice A v odvisnosti od velikosti vhoda za algoritem predlagan v članku brez in z delitvijo točk v trojčke in četvorčke")
 
-    # Shranimo graf
-    plt.savefig('../results/A_size_comparison.png')
+    # Shranimo v razlicne datoteke, ce imamo vsiljene antiverige ali pa ce jih nimamo
+    if n_antichains == 0:
+        plt.savefig('../results/A_size_comparison.png')
+    else:
+        plt.savefig('../results/A_size_comparison_antichains.png')
 
 
 if __name__ == "__main__":
@@ -210,9 +242,19 @@ if __name__ == "__main__":
     VELIKOSTI_MNOZIC = [5, 10, 15, 20, 25, 30, 35, 40, 45]
     # Stevilo testnih primerov za vsako velikost mnozice
     STEVILO_PRIMEROV = 5
+    # Velikosti mnozic, ki jih bomo testirali pri dodanih primerih z vsiljenimi antiverigami
+    VELIKOSTI_MNOZIC_ANTIVERIGE = [5, 10, 15, 20, 25]
+    # Stevilo testnih primerov z vsiljenimi antiverigami za vsako velikost mnozice
+    STEVILO_ANTIVERIG = 10
+    # Velikosti vsiljenih antiverig
+    VELIKOSTI_ANTIVERIG = 5*[1/3] + 5*[1/2]
 
     # Ustvarimo mnozice
     generate_data(VELIKOSTI_MNOZIC, STEVILO_PRIMEROV, seed=42)
+    generate_with_antichain(VELIKOSTI_MNOZIC, STEVILO_ANTIVERIG, VELIKOSTI_ANTIVERIG, seed=7)
 
-    # Izvedemo eksperiment
-    compare_algorithms(VELIKOSTI_MNOZIC, STEVILO_PRIMEROV)
+    # Izvedemo eksperiment brez vsiljenih antiverig
+    compare_algorithms(VELIKOSTI_MNOZIC, STEVILO_PRIMEROV, 0)
+
+    # Izvedemo eksperiment z vsiljenimi antiverigami
+    compare_algorithms(VELIKOSTI_MNOZIC_ANTIVERIGE, STEVILO_PRIMEROV, STEVILO_ANTIVERIG)

@@ -1,7 +1,7 @@
 import math
 import networkx as nx
 
-from data_preparation import generate_data, create_graph
+from data_preparation import generate_data, generate_with_antichain , create_graph
 
 
 def divide_and_conquer(partial_order, memo=None):
@@ -13,6 +13,9 @@ def divide_and_conquer(partial_order, memo=None):
     """
     if memo is None:
         memo = {}
+
+    # Shranimo kopijo grafa da se ta zunaj funkcije ne spremeni
+    partial_order = partial_order.copy()
 
     # Zaustavitveni pogoj rekurzije
     if partial_order.order() == 1:
@@ -84,7 +87,7 @@ def get_canonical_matching(M, A, all_edges):
         is_separated, replacement = get_separated(edge, A, all_edges)
         if is_separated:
             M.remove(edge)
-            M.add(replacement, edge[1])
+            M.add((replacement, edge[1]))
             A.remove(replacement)
             A.add(edge[0])
             get_canonical_matching(M, A, all_edges)
@@ -118,6 +121,7 @@ def get_bipartite_quartets(T, A, all_edges):
     :param all_edges: set povezav, povezava u -> v pomeni, da je u < v
     :return: nx.Graph() - bipartitni graf za četvorčke
     """
+
     B = nx.Graph()
     B.add_nodes_from(A, bipartite=0)
     B.add_nodes_from(T, bipartite=1)
@@ -138,6 +142,9 @@ def paper_algorithm(partial_order, triplets=True):
     :param triplets: boolean - ali algoritem ujemanje se dodatno deli na trojcke in cetvorcke
     :return: (linear_extensions, large_case, A_size) - Stevilo linearnih razsiritev, indikator, ki pove ali je alfa vecja od 1/3 (uporabimo osnovni algoritem) ter velikost mnozice A
     """
+
+    # Shranimo kopija grafa, da se ta zunaj funkcije ne spremeni
+    partial_order = partial_order.copy()
 
     linear_extensions = 1
     all_edges = set(partial_order.edges())
@@ -188,15 +195,34 @@ def paper_algorithm(partial_order, triplets=True):
 
 
 if __name__ == "__main__":
-    velikosti = [5, 10, 15, 20, 25, 30, 35, 40]
+    velikosti = [5, 10, 15, 20]
     st_primerov = 5
     generate_data(velikosti, st_primerov, seed=1)
+
+    velikosti_antiverig = [1/3]*5 + [1/2]*5
+    st_antiverig = 10
+    generate_with_antichain(velikosti[:2], st_antiverig, velikosti_antiverig, seed=2)
+
 
     # Preizkus pravilnosti algoritmov
     for n in velikosti:
         for k in range(st_primerov):
             # Pot do vhodne datoteke
             path = f'../data/vhod_{n}_{k + 1}.txt'
+            # Ustvarimo graf, ki predstavlja podano delno urejenost
+            g = create_graph(path)
+
+            # Izvedemo oba algoritma, razsirimo rezultate
+            l1 = divide_and_conquer(g)
+            l2, _, _ = paper_algorithm(g)
+            print(f"Rezultat deli in vladaj algoritma na vhodu {path}:", l1)
+            print(f"Rezultat algoritma iz clanka na vhodu {path}:", l2)
+            assert (l1 == l2)
+
+    for n in velikosti[:2]:
+        for k in range(st_antiverig):
+            # Pot do vhodne datoteke
+            path = f'../data/vhod_antichain_{n}_{k + 1}.txt'
             # Ustvarimo graf, ki predstavlja podano delno urejenost
             g = create_graph(path)
 
