@@ -251,10 +251,12 @@ if __name__ == "__main__":
 
     # Ustvarimo mnozice
     generate_data(VELIKOSTI_MNOZIC, STEVILO_PRIMEROV, seed=42)
-    generate_with_antichain(VELIKOSTI_MNOZIC, STEVILO_ANTIVERIG, VELIKOSTI_ANTIVERIG, seed=7)
 
     # Izvedemo eksperiment brez vsiljenih antiverig
     compare_algorithms(VELIKOSTI_MNOZIC, STEVILO_PRIMEROV, 0)
+
+    # Ustvarimo mnozice z antiverigami
+    generate_with_antichain(VELIKOSTI_MNOZIC_ANTIVERIGE, STEVILO_ANTIVERIG, VELIKOSTI_ANTIVERIG, seed=7)
 
     # Izvedemo eksperiment z vsiljenimi antiverigami
     compare_algorithms(VELIKOSTI_MNOZIC_ANTIVERIGE, STEVILO_PRIMEROV, STEVILO_ANTIVERIG)

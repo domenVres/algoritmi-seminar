@@ -14,9 +14,6 @@ def divide_and_conquer(partial_order, memo=None):
     if memo is None:
         memo = {}
 
-    # Shranimo kopijo grafa da se ta zunaj funkcije ne spremeni
-    partial_order = partial_order.copy()
-
     # Zaustavitveni pogoj rekurzije
     if partial_order.order() == 1:
         return 1
