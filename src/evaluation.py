@@ -255,8 +255,8 @@ if __name__ == "__main__":
     # Izvedemo eksperiment brez vsiljenih antiverig
     compare_algorithms(VELIKOSTI_MNOZIC, STEVILO_PRIMEROV, 0)
 
-    # # Ustvarimo mnozice z antiverigami
-    # generate_with_antichain(VELIKOSTI_MNOZIC_ANTIVERIGE, STEVILO_ANTIVERIG, VELIKOSTI_ANTIVERIG, seed=7)
-    #
-    # # Izvedemo eksperiment z vsiljenimi antiverigami
-    # compare_algorithms(VELIKOSTI_MNOZIC_ANTIVERIGE, STEVILO_PRIMEROV, STEVILO_ANTIVERIG)
+    # Ustvarimo mnozice z antiverigami
+    generate_with_antichain(VELIKOSTI_MNOZIC_ANTIVERIGE, STEVILO_ANTIVERIG, VELIKOSTI_ANTIVERIG, seed=7)
+
+    # Izvedemo eksperiment z vsiljenimi antiverigami
+    compare_algorithms(VELIKOSTI_MNOZIC_ANTIVERIGE, STEVILO_PRIMEROV, STEVILO_ANTIVERIG)
