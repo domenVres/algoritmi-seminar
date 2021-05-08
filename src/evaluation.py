@@ -80,6 +80,8 @@ def compare_algorithms(set_sizes, n_sets, n_antichains):
     # Intervali zaupanja za stevilo primerov, ko imamo large matching case
     large_matching_upper = []
     large_matching_lower = []
+    large_matching_upper_triplets = []
+    large_matching_lower_triplets = []
 
     # Velikosti mnozice A, ce imamo large matching case shranimo kar 0
     A_size = []
@@ -99,6 +101,7 @@ def compare_algorithms(set_sizes, n_sets, n_antichains):
 
         # Ali smo sli v large matching case
         large_matching = []
+        large_matching_triplets = []
 
         # Velikost mnozice A
         A_sizes = []
@@ -126,6 +129,7 @@ def compare_algorithms(set_sizes, n_sets, n_antichains):
             print(f"Evalvacija algoritma iz clanka s trojcki in cetvorcki za n = {n} in k = {k+1} ...")
             times, results = measure_execution(g, paper_algorithm)
             results_paper_triplets = np.concatenate((results_paper_triplets, times))
+            large_matching_triplets.append(results[1])
             A_sizes_triplets.append(results[2])
 
         # Evalviramo na primerih z vsiljenimi antiverigami
@@ -146,10 +150,12 @@ def compare_algorithms(set_sizes, n_sets, n_antichains):
             print(f"Evalvacija algoritma iz clanka s trojcki in cetvorcki na vsiljenih antiverigah za n = {n} in k = {k + 1} ...")
             times, results = measure_execution(g, paper_algorithm)
             results_paper_triplets = np.concatenate((results_paper_triplets, times))
+            large_matching_triplets.append(results[1])
             A_sizes_triplets.append(results[2])
 
         # Spremenimo v arraye za lazje racunanje
         large_matching = np.array(large_matching)
+        large_matching_triplets = np.array(large_matching_triplets)
         A_sizes = np.array(A_sizes)
         A_sizes_triplets = np.array(A_sizes_triplets)
 
@@ -171,6 +177,9 @@ def compare_algorithms(set_sizes, n_sets, n_antichains):
         lower, upper = bootstrap_ci(large_matching, nsamples=100)
         large_matching_lower.append(100*np.round(lower, 4))
         large_matching_upper.append(100*np.round(upper, 4))
+        lower, upper = bootstrap_ci(large_matching_triplets, nsamples=100)
+        large_matching_lower_triplets.append(100 * np.round(lower, 4))
+        large_matching_upper_triplets.append(100 * np.round(upper, 4))
 
         # Povprecna velikost A in interval zaupanja
         A_size.append(np.mean(A_sizes))
@@ -208,7 +217,8 @@ def compare_algorithms(set_sizes, n_sets, n_antichains):
         plt.savefig('../results/time_comparison_antichains.png')
 
     # Shranimo intervale zaupanja za odstotek primerov, ko gremo v large matching v .csv datoteko
-    df = pd.DataFrame(data={"n": set_sizes, "ci_min": large_matching_lower, "ci_max": large_matching_upper})
+    df = pd.DataFrame(data={"n": set_sizes, "ci_min": large_matching_lower, "ci_max": large_matching_upper,
+                            "ci_min_triplets": large_matching_lower_triplets, "ci_max_triplets": large_matching_upper_triplets})
     if n_antichains == 0:
         df.to_csv('../results/large_matching.csv', index=False)
     else:
