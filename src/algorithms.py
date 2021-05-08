@@ -149,8 +149,13 @@ def paper_algorithm(partial_order, triplets=True):
 
     M = nx.maximal_matching(partial_order)
     # large matching ali small matching
-    if len(M)/n >= 1/3:
-        return divide_and_conquer(partial_order), True, 0
+    if triplets:
+        if len(M)/n >= 1/3:
+            return divide_and_conquer(partial_order), True, 0
+    else:
+        if len(M)/n > 1/6:
+            return divide_and_conquer(partial_order), True, 0
+
     W = get_matching_nodes(M)
     A = set(partial_order.nodes()) - W
 
